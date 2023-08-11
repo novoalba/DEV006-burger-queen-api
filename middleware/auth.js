@@ -1,6 +1,8 @@
 const jwt = require('jsonwebtoken');
+const connect = require('../connect');
 
-module.exports = (secret) => (req, resp, next) => {
+module.exports = (secret) => async (req, resp, next) => {
+  console.log('Middleware: checkAuthMiddleware is executing');
   const { authorization } = req.headers;
 
   if (!authorization) {
@@ -12,24 +14,47 @@ module.exports = (secret) => (req, resp, next) => {
   if (type.toLowerCase() !== 'bearer') {
     return next();
   }
+  console.log('Token recibido:', token); // Agregar esta línea para verificar el token
 
-  jwt.verify(token, secret, (err, decodedToken) => {
+
+  if (secret !== 'esta-es-la-api-burger-queen') {
+    console.error('El secret key no coincide');
+    return next(403);
+  } console.log('El secret key coincide')
+
+
+
+  jwt.verify(token, secret, async (err, decodedToken) => {
     if (err) {
+      console.error('Error al verificar el token', err)
       return next(403);
     }
 
-    // TODO: Verificar identidad del usuario usando `decodeToken.uid`
+    req.userId = decodedToken.uid;
+    req.isAdmin = decodedToken.role === 'admin';
+    console.log('req.isAdmin: ', req.isAdmin);
+    req.thisEmail = decodedToken.email;
+
+    if (req.isAdmin) {
+      console.log('El usuarix es admin');
+    } else {
+      console.log('El usuarix no es admin');
+    }
+    
+    next();
   });
 };
 
 module.exports.isAuthenticated = (req) => (
   // TODO: decidir por la informacion del request si la usuaria esta autenticada
-  false
+  !!req.userId
+  /* false */
 );
 
 module.exports.isAdmin = (req) => (
   // TODO: decidir por la informacion del request si la usuaria es admin
-  false
+  !!req.isAdmin
+  /* false */
 );
 
 module.exports.requireAuth = (req, resp, next) => (

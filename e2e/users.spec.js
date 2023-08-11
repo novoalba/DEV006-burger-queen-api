@@ -1,6 +1,14 @@
 const url = require('url');
 const qs = require('querystring');
 const config = require('../config');
+const { MongoMemoryServer } = require('mongodb-memory-server');
+
+const mongoServer = new MongoMemoryServer({
+  binary: {
+    version: '6.0.7' // Especifica una versión válida de MongoDB
+  }
+});
+
 
 const {
   fetch,
